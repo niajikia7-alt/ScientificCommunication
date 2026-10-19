@@ -1,4 +1,7 @@
 # Python dependencies for the full pipeline (tested with Python 3.11).
+# On a machine without an NVIDIA GPU, first install the much smaller CPU build
+# of PyTorch (the default one pulls in several GB of CUDA libraries):
+#   pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
 # Afterwards also run:
 #   python -m spacy download en_core_web_sm
 #   python -m spacy download en_core_web_md
