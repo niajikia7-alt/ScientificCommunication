@@ -30,11 +30,24 @@ def main():
                         default='missing_papers.txt')
     parser.add_argument('--empty-file', help='output file for empty papers',
                         default='empty_papers.txt')
+    parser.add_argument('--min-year', type=int, default=None,
+                        help='only consider papers from this year onwards')
+    parser.add_argument('--include-frontmatter', action='store_true',
+                        help='also list frontmatter entries (IDs ending in .0), '
+                             'which are excluded from the analyses anyway')
     args = parser.parse_args()
 
     anthology_df = pd.read_parquet(args.anthology_file)
     corpus_df = load_corpus_dfs(args.corpus_files)
     print('Loaded dataframes')
+
+    if args.min_year is not None:
+        years = pd.to_numeric(anthology_df['year'], errors='coerce')
+        anthology_df = anthology_df.loc[years >= args.min_year]
+        corpus_df = corpus_df.loc[corpus_df['acl_id'].isin(anthology_df['acl_id'])]
+    if not args.include_frontmatter:
+        anthology_df = anthology_df.loc[~anthology_df['acl_id'].str.endswith('.0')]
+        corpus_df = corpus_df.loc[~corpus_df['acl_id'].str.endswith('.0')]
 
     all_ids = anthology_df['acl_id'].to_list()
     avail_ids = corpus_df['acl_id'].to_list()
@@ -46,6 +59,9 @@ def main():
 
     with open(args.empty_file, 'w') as f:
         f.writelines([paper+'\n' for paper in empty_ids])
+
+    print(f'{len(missing_ids)} missing papers -> {args.missing_file}')
+    print(f'{len(empty_ids)} empty papers -> {args.empty_file}')
 
 
 if __name__ == '__main__':

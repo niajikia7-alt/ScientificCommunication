@@ -76,6 +76,9 @@ class TEIFile(object):
     def text(self):
         if not self._text:
             divs_text = []
+            if self.soup.body is None:
+                # GROBID found no body text (e.g. scanned or broken PDF)
+                return ""
             for div in self.soup.body.find_all("div"):
                 # div is neither an appendix nor references, just plain text.
                 if not div.get("type"):
