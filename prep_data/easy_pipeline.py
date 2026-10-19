@@ -7,19 +7,22 @@ from tabulate import tabulate
 from langid.langid import LanguageIdentifier, model
 
 nlp = spacy.load("en_core_web_sm")
+lang_identifier = LanguageIdentifier.from_modelstring(model, norm_probs=True)
 
 
-def return_sentences_batch(texts):
+def return_sentences_batch(texts, batch_size=8):
     """
     Process multiple texts in batch mode using SpaCy.
 
     :param texts: List of strings (documents)
+    :param batch_size: number of documents parsed at once; full papers are long, so spaCy's default
+        of 1000 runs out of memory
     :return: List of lists, where each sublist contains sentences from a document
     """
     sentence_lists = []
 
     # Process texts in batch using nlp.pipe
-    for doc in tqdm(nlp.pipe(texts, disable=["ner", "tagger"]), total=len(texts)):  # Disable components not needed for speed
+    for doc in tqdm(nlp.pipe(texts, disable=["ner", "tagger"], batch_size=batch_size), total=len(texts)):  # Disable components not needed for speed
         sentences = [sent.text for sent in doc.sents]
         sentence_lists.append(sentences)
 
@@ -34,7 +37,6 @@ def remove_non_english_sentences(sentences):
     :param sentences: a [list] of sentences , each sentence is a [string].
     :return: a filtered list of sentences that are in English.
     """
-    lang_identifier = LanguageIdentifier.from_modelstring(model, norm_probs=True)
     english_sentences = []
     for sentence in sentences:
         lang, prob = lang_identifier.classify(sentence)
@@ -95,10 +97,11 @@ def process_texts(df, window_size):
     english_sentences_list = [remove_non_english_sentences(sentences) for sentences in sentences_list]
     windows_list = [create_sentence_windows(sentences, window_size) for sentences in english_sentences_list]
 
-    # Precompute the rows using list comprehensions
+    # Precompute the rows using list comprehensions; the paper's full text is not copied into
+    # every window row, as that would make the output far too large to load for the full corpus
     new_dfs = [
         {**row._asdict(), "text": " ".join(window)}
-        for row, windows in tqdm(zip(df.itertuples(index=False), windows_list), total=len(df))
+        for row, windows in tqdm(zip(df.drop(columns="full_text").itertuples(index=False), windows_list), total=len(df))
         for window in windows
     ]
 

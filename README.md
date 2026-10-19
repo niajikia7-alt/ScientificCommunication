@@ -7,6 +7,18 @@ This repository contains the code for the following paper:
 Below, we provide a general overview of this repository. Each subdirectory
 additionally contains a readme file with more detailed information.
 
+### Running the code
+Python dependencies are listed in `requirements.txt`. The R scripts in
+`feature_analysis` need the packages loaded at the top of each script
+(`arrow`, `broom.mixed`, `car`, `lme4`, `lmerTest`, `jtools`, `sjPlot`, ...).
+Large data files in `data/original` are stored with Git LFS (`git lfs pull`).
+
+Scripts use relative paths, so run them from these directories:
+* `update_original_corpus/`, `prep_data/`, `feature_analysis/` (including
+  `Rscript regression_realistic.R` / `regression_synthetic.R`) and
+  `lexical_analysis/` (notebooks): from within the directory itself
+* `data/human_annotation/analyze_annotations.py`: from the repository root
+
 
 ### ACL Anthology Corpus
 Our paper uses a corpus of papers from the ACL Anthology, which is effectively

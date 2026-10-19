@@ -176,7 +176,7 @@ def plot_preference_distribution(df, annot, id_col=None):
     sns.despine(left=True, bottom=True)
     plt.tight_layout()
     # save figure
-    plt.savefig(f"/Users/falkne/PycharmProjects/cacl-ocl/annotation_which_is_more/distribution_{annot}.png", dpi=300,
+    plt.savefig(f"data/human_annotation/plots/distribution_{annot}.png", dpi=300,
                 bbox_inches="tight")
     # plt.show()
 

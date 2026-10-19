@@ -14,6 +14,8 @@ if __name__ == '__main__':
     argumentparser.add_argument('--output_path', required=True, help="Path to save the extracted features")
     # add data tpye (options are 'csv' or 'parquet')
     argumentparser.add_argument('--data_type', required=True, help="Type of the dataset")
+    argumentparser.add_argument('--chunk_size', type=int, default=10000,
+                                help="Number of texts to extract features for at a time")
     args = argumentparser.parse_args()
     feature_groups = ["readtimeformula", "lexicalvariation", "wordsent"]
 
@@ -37,17 +39,22 @@ if __name__ == '__main__':
 
     print("Number of features to be extracted: %d" % len(all_feats))
     print(all_feats)
-    docs = list(
-        tqdm(
-            nlp.pipe(df["text"].to_pandas(), batch_size=1000, n_process=-1),
-            total=len(df),
-            desc="Processing texts"
-        )
+    docs = tqdm(
+        nlp.pipe(df[args.text_column].to_pandas(), batch_size=1000, n_process=-1),
+        total=len(df),
+        desc="Processing texts"
     )
-    LFTK = lftk.Extractor(docs=docs)
-    print("Extracting features...")
-    # Extract features (should return a numpy array or pandas DataFrame)
-    extracted_feats = LFTK.extract(features=all_feats)
+    # Extract features chunk by chunk, so that only `chunk_size` spaCy docs
+    # are held in memory at a time (one row of features per doc)
+    extracted_feats = []
+    chunk = []
+    for doc in docs:
+        chunk.append(doc)
+        if len(chunk) == args.chunk_size:
+            extracted_feats.extend(lftk.Extractor(docs=chunk).extract(features=all_feats))
+            chunk = []
+    if chunk:
+        extracted_feats.extend(lftk.Extractor(docs=chunk).extract(features=all_feats))
 
     # Convert directly to a Polars DataFrame with correct column names
     extracted_pl = pl.DataFrame(extracted_feats, schema=all_feats)

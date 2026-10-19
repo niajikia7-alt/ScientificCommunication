@@ -18,7 +18,7 @@ python find_missing_papers.py $existing_corpus
 python get_missing_papers.py missing_papers.txt --pdf-dirs $pdf_dir --out-dir $pdf_dir 2> $log_file
 
 # Uncomment to also download empty papers (limited likelihood that they have become available)
-# python get_missing_papers.py empty_papers.txt --pdf-dirs $pdf_dir --out-dir $pdf_dir 2> $log_file
+# python get_missing_papers.py empty_papers.txt --pdf-dirs $pdf_dir --out-dir $pdf_dir 2>> $log_file
 
 # Convert PDFs into XML files
 # Start Docker container for GROBID server in detached mode
@@ -26,13 +26,13 @@ docker run -d --name grobid --rm --init --ulimit core=0 -p 8070:8070 lfoppiano/g
 
 # Give GROBID time to get running
 echo "Waiting for GROBID service to initialize..."
-until curl -s http://localhost:8070/health; do
+until curl -sf http://localhost:8070/api/isalive; do
   sleep 2
 done
 echo "Ready."
 
 # Run PDF to XML conversion
-python get_xml_from_pdf.py $pdf_dir $xml_dir 2> $log_file
+python get_xml_from_pdf.py $pdf_dir $xml_dir 2>> $log_file
 
 # Stop GROBID container
 docker stop grobid

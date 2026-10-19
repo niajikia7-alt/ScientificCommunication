@@ -20,6 +20,8 @@ def main():
                         'defaults to {model_files[0]}_sim_avg.parquet')
     parser.add_argument('--smaller', action='store_true', default=False,
                         help='saves output in np.float16 format')
+    parser.add_argument('--block_size', type=int, default=2000,
+                        help='rows per block when computing similarities')
     args = parser.parse_args()
 
     # Load individual models
@@ -37,21 +39,22 @@ def main():
             raise ValueError('Vocabularies not identical')
     print('All vocabularies identical.')
 
-    # Compute similarity matrix for each run
-    matrices = []
+    # Get average similarity matrix, accumulated in row blocks so that only
+    # one vocabulary-sized matrix is held in memory regardless of run count
+    n = len(vocabs[0])
+    mean_matrix = np.zeros((n, n), dtype=np.float32)
     for model in models:
-        matrix = np.dot(model, model.T)
-        matrices.append(matrix)
-
-    # Get average similarity matrix
-    mean_matrix = np.mean(matrices, axis=0)
+        for start in range(0, n, args.block_size):
+            end = start + args.block_size
+            mean_matrix[start:end] += np.dot(model[start:end], model.T)
+    mean_matrix /= len(models)
     print('Mean similarity matrix computed.')
+    if args.smaller:
+        mean_matrix = mean_matrix.astype(np.float16)
+        print('Saving in np.float16')
 
     # Put everything into pandas and write out
     df = pd.DataFrame(mean_matrix, index=vocabs[0], columns=vocabs[0])
-    if args.smaller:
-        df = df.astype(np.float16)
-        print('Saving in np.float16')
     if not args.out_file:
         args.out_file = f'{Path(args.model_files[0]).stem}_sim_avg.parquet'
     out_path = os.path.join(args.out_dir, args.out_file)
