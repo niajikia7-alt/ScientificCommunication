@@ -14,6 +14,7 @@ library(emmeans)
 library(lmerTest)
 library(sjPlot)
 library(arrow)
+library(broom)
 
 surface <- c("t_stopword", "avg_word_length")
 morphosyntactic <- c("n_propn", "n_PUNCT_PunctType_Comm", "n_PUNCT_PunctType_Dash", "n_PUNCT_PunctType_Brck", "n_part")
@@ -24,17 +25,17 @@ lexicosemantic <- c("corr_verb_var", "simpsons_d", "n_date", "n_org", "entropy")
 best_feature_mixed <- c(surface, morphosyntactic, syntax, psycholinguistic, sentiment, lexicosemantic)
 length(best_feature_mixed)
 
-feature_overview <- read.csv("/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/reliable_features_odds_with_feature_groups.csv")
+feature_overview <- read.csv("results_feature_analysis/reliable_features_odds_with_feature_groups.csv")
 top30 <- head(feature_overview, 30)
 top30_feats <- top30$Unnamed..0
 top30_feats
 
 # --------- load the data and select a subset of relevant columns
-f = "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/cacl_t1_reliable_features.parquet"
+f = "../data/original/cacl_t1_reliable_features.parquet"
 df_t1 <- open_dataset(f)
-f2 = "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/cacl_t2_reliable_features.parquet"
+f2 = "../data/original/cacl_t2_reliable_features.parquet"
 df_t2 <- open_dataset(f2)
------------------------------------
+# -------------
 # mixed feature set
 df_t1_filtered <- df_t1 %>%  dplyr::select(all_of(best_feature_mixed))
 robust_df_t1 <- df_t1_filtered %>% collect()
@@ -63,7 +64,7 @@ summ(model_best5_from_all)
 
 
 
-------------- # for top30feats
+# ------------- for top30feats
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(top30_feats))
@@ -91,7 +92,7 @@ model_top30feats <- glm(
 summ(model_top30feats)
 
 
-------------- # for morphosyntactic
+# ------------- for morphosyntactic
 
 df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(morphosyntactic))
@@ -116,7 +117,7 @@ merged_t1_t2 <- merged_t1_t2 %>%
 model_morphosyntacic <- glm (after ~(n_propn + n_PUNCT_PunctType_Comm + n_PUNCT_PunctType_Dash + n_PUNCT_PunctType_Brck + n_part) ,data = merged_t1_t2, family = binomial)
 summ(model_morphosyntacic)
 
-------------- # for syntax
+# ------------- for syntax
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(syntax))
@@ -141,7 +142,7 @@ merged_t1_t2 <- merged_t1_t2 %>%
 model_syntax <- glm (after ~(n_dependency_advcl + n_dependency_case + n_dependency_compound + n_dependency_conj + n_dependency_neg) ,data = merged_t1_t2, family = binomial)
 summ(model_syntax)
 
-------------- # for psycholinguistic
+# ------------- for psycholinguistic
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(psycholinguistic))
@@ -166,7 +167,7 @@ merged_t1_t2 <- merged_t1_t2 %>%
 model_psycholinguistic <- glm (after ~(avg_aoa + n_high_Head_sensorimotor + avg_concreteness + n_high_Auditory_sensorimotor) ,data = merged_t1_t2, family = binomial)
 summ(model_psycholinguistic)
 
-------------- # for sentiment
+# ------------- for sentiment
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(sentiment))
@@ -188,10 +189,10 @@ merged_t1_t2 <- rbind(robust_df_t1, robust_df_t2)
 
 merged_t1_t2 <- merged_t1_t2 %>%
   mutate(across(where(is.numeric) & !c(after), scale))
-model_sentiment <- glm (after ~(n_high_intensity_anger + n_high_intensity_trust + n_high_intensity_anticipation + n_high_arousal + n_positive_sentiment) ,data = merged_t1_t2, family = binomial)
+model_sentiment <- glm (after ~(n_high_intensity_anger + n_high_intensity_trust) ,data = merged_t1_t2, family = binomial)
 summ(model_sentiment)
 
-------------- # for lexicosemantic
+# ------------- for lexicosemantic
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(lexicosemantic))
@@ -216,7 +217,7 @@ merged_t1_t2 <- merged_t1_t2 %>%
 model_lexicosemantic <- glm (after ~(corr_verb_var + simpsons_d + n_date + n_org + entropy) ,data = merged_t1_t2, family = binomial)
 summ(model_lexicosemantic)
 
-------------- # for surface
+# ------------- for surface
   
   df_t1_filtered <- df_t1 %>% 
   dplyr::select(all_of(surface))
@@ -255,7 +256,7 @@ or_results <- tidy(model_best5_from_all,
                    exponentiate = TRUE, 
                    conf.int = FALSE)
 or_results
-write.csv(or_results, "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/odds_realistic.csv")
+write.csv(or_results, "results_feature_analysis/odds_realistic.csv")
 
 se <- sqrt(diag(vcov(model_best5_from_all)))
 est <- coef(model_best5_from_all)
@@ -271,6 +272,6 @@ results <- data.frame(term = names(est),
                       OR = odds_ratios,
                       CI_lower = ci_lower_or,
                       CI_upper = ci_upper_or)
-write.csv(results, "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/waldCIs_realistic.csv")
+write.csv(results, "results_feature_analysis/waldCIs_realistic.csv")
 
-write.csv(anova_res_df, "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/rel_importance_realistic.csv")
+write.csv(anova_res_df, "results_feature_analysis/rel_importance_realistic.csv")

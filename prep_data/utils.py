@@ -5,7 +5,8 @@ def read_pandas(path: str, **kwargs) -> pd.DataFrame:
 
     Args:
         path: Path to pandas dataframe file. Based on ending, resolved as
-          parquet (`.parquet`), CSV (`.csv`), TSV (`.tsv`), or otherwise pickle.
+          parquet (`.parquet`), CSV (`.csv`), TSV (`.tsv`, or `.txt` as
+          written by `make_frequency_count.py`), or otherwise pickle.
         kwargs: Keyword arguments passed to pandas read function.
 
     Returns:
@@ -15,7 +16,7 @@ def read_pandas(path: str, **kwargs) -> pd.DataFrame:
         df = pd.read_parquet(path, **kwargs)
     elif path.endswith('.csv'):
         df = pd.read_csv(path, **kwargs)
-    elif path.endswith('.tsv'):
+    elif path.endswith(('.tsv', '.txt')):
         df = pd.read_csv(path, sep='\t', **kwargs)
     else:
         df = pd.read_pickle(path, **kwargs)

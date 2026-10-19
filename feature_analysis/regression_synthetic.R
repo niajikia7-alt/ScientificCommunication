@@ -18,15 +18,15 @@ library(broom.mixed)
 
 # use this script to analyze the human and gpt paraphrased data.
 
-human_sample <- read.csv("/Users/falkne/PycharmProjects/cacl-ocl/results_gpt/human_sample_features.csv")
-gpt_sample <- read.csv("/Users/falkne/PycharmProjects/cacl-ocl/results_gpt/gpt_sample_features.csv")
+human_sample <- read.csv("../data/LLM/human_sample_features.csv")
+gpt_sample <- read.csv("../data/LLM/gpt_sample_features.csv")
 nrow(human_sample)
 nrow(gpt_sample)
 names(human_sample)
 summary(human_sample)
 names(human_sample)
 head(human_sample)
-feature_overview <- read.csv("/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/reliable_features_odds_with_feature_groups.csv")
+feature_overview <- read.csv("results_feature_analysis/reliable_features_odds_with_feature_groups.csv")
 top30 <- head(feature_overview, 30)
 top30_feats <- top30$Unnamed..0
 top30_feats
@@ -43,6 +43,9 @@ human_sample <- human_sample %>%
 gpt_sample <- gpt_sample %>%
   mutate(id = 0:(n()-1))
 
+# the paraphrase text column only exists for GPT samples; drop it so both can be stacked
+gpt_sample <- gpt_sample %>% dplyr::select(-improved_text)
+
 ncol(human_sample)
 ncol(gpt_sample)
 names(human_sample)
@@ -57,10 +60,6 @@ merged_df$paper_id <- as.character(merged_df$id)
 merged_df <- merged_df %>%
   mutate(across(where(is.numeric) & !c(paper_id, model), scale))
 
-
-model <- glmer(class ~ . - paper_id + (1 | paper_id), 
-               data = your_data, 
-               family = binomial)
 
 model_fixed_top30 <- glmer(
   model ~ (t_stopword + n_propn + n_PUNCT_PunctType_Comm + n_PUNCT_PunctType_Dash + n_PROPN_Number_Plur + n_dependency_advcl + n_PUNCT_PunctType_Brck + avg_aoa + n_part + corr_verb_var + simpsons_d + n_high_Head_sensorimotor + n_dependency_case + n_date + n_VERB_VerbForm_Fin + n_dependency_compound + n_org + entropy + mattr + n_NOUN_Number_Plur + n_dependency_conj + n_high_intensity_anger + n_aux + n_DET_Definite_Def + n_high_intensity_trust + n_dependency_neg + avg_concreteness + corr_num_var + n_high_concreteness + n_dependency_nsubjpass) + (1 | paper_id),
@@ -78,7 +77,7 @@ p <- plot_model(model_best5_from_all_fixed_synthetic)
 exp(fixef(model_best5_from_all_fixed_synthetic))
 tidy_model <- tidy(model_best5_from_all_fixed_synthetic, conf.int = TRUE, exponentiate = TRUE)
 tidy_model
-write.csv(tidy_model, "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/odds_synthetic.csv")
+write.csv(tidy_model, "results_feature_analysis/odds_synthetic.csv")
 
 anova_res_synthetic <- Anova(model_best5_from_all_fixed_synthetic, test = "Chisq")
 anova_res_synthetic_df <- as.data.frame(anova_res_synthetic)
@@ -87,5 +86,5 @@ anova_res_synthetic_df$Rel_Importance <- round(anova_res_synthetic_df$Chisq / su
 anova_res_synthetic_df <- anova_res_synthetic_df[order(-anova_res_synthetic_df$Rel_Importance), ]
 
 anova_res_synthetic_df
-write.csv(anova_res_synthetic_df, "/Users/falkne/PycharmProjects/cacl-ocl/results_feature_selection_final/robust/rel_importance_synthetic.csv")
+write.csv(anova_res_synthetic_df, "results_feature_analysis/rel_importance_synthetic.csv")
 

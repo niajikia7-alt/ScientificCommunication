@@ -11,7 +11,7 @@ from scipy.spatial.distance import cosine
 from transformers import AutoTokenizer, AutoModel
 
 MODEL = 'answerdotai/ModernBERT-base'
-CACHE = '/' # path to the directory where you want to cache the model
+CACHE = None # path to the directory where you want to cache the model (None: HF default)
 
 
 def load_inputs(lemmatized_path: str, tokenized_path: str,

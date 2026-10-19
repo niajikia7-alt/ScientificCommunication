@@ -13,7 +13,7 @@ def filter_reliable_feature():
     """
     # === Load data ===
     df = pd.read_csv(
-        "results_feature_selection/robust_results_feature_summary.csv"
+        "results_feature_analysis/robust_results_feature_summary.csv"
     )
     print(tabulate.tabulate(df.head(), headers='keys', tablefmt='psql'))
     print("length of df:", len(df))

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print(all_feats)
     docs = list(
         tqdm(
-            nlp.pipe(df["text"].to_pandas(), batch_size=1000, n_process=-1),
+            nlp.pipe(df[args.text_column].to_pandas(), batch_size=1000, n_process=-1),
             total=len(df),
             desc="Processing texts"
         )
